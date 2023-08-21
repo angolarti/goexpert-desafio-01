@@ -72,8 +72,8 @@ func BuscarCotacao() (*Cotacao, error) {
 		return nil, err
 	}
 
-	var cotacao map[string]interface{}
-	json.Unmarshal([]byte(body), &cotacao)
+	cotacao := JsonToMap(body)
+
 	var c Cotacao
 	jsonStr, _ := json.Marshal(cotacao["USDBRL"])
 	err = json.Unmarshal(jsonStr, &c)
@@ -95,4 +95,10 @@ func SaveCotacao(ctx context.Context, c *Cotacao) error {
 
 	db.WithContext(ctx).Create(&c)
 	return nil
+}
+
+func JsonToMap(body []byte) map[string]interface{} {
+	var cotacao map[string]interface{}
+	json.Unmarshal(body, &cotacao)
+	return cotacao
 }
