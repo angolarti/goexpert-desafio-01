@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -87,13 +88,19 @@ func BuscarCotacao() (*Cotacao, error) {
 func SaveCotacao(ctx context.Context, c *Cotacao) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
-	db, err := gorm.Open(sqlite.Open("usdbrl.db"), &gorm.Config{})
+
+	db, err := gorm.Open(sqlite.Open("../usdbrl.db"), &gorm.Config{})
 	if err != nil {
 		return err
 	}
 	db.AutoMigrate(&Cotacao{})
-
-	db.WithContext(ctx).Create(&c)
+	select {
+	case <-time.After(10 * time.Second):
+		db.WithContext(ctx).Create(&c)
+	case <-ctx.Done():
+		err := ctx.Err()
+		fmt.Println(err)
+	}
 	return nil
 }
 
