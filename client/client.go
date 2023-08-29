@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	c := http.Client{Timeout: time.Second * 300}
+	c := http.Client{Timeout: time.Millisecond * 300}
 	resp, err := c.Get("http://localhost:8080/cotacao")
 	if err != nil {
 		panic(err)
@@ -19,11 +19,16 @@ func main() {
 		panic(err)
 	}
 
-	f, err := os.Create("./cotacao.txt")
+	if string(bid) != "" {
+		f, err := os.Create("cotacao.txt")
+		if err != nil {
+			panic(err)
+		}
+		defer f.Close()
 
-	_, err = f.Write([]byte("Dólar: " + string(bid)))
-	if err != nil {
-		panic(err)
+		_, err = f.Write([]byte("Dólar: " + string(bid)))
+		if err != nil {
+			panic(err)
+		}
 	}
-	f.Close()
 }

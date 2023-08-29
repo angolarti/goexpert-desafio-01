@@ -53,7 +53,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func BuscarCotacao() (*Cotacao, error) {
 	var URL = "https://economia.awesomeapi.com.br/json/last/USD-BRL"
 	ctx := context.Background()
-	ctx, cancel := context.WithTimeout(ctx, time.Second*200)
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*200)
 	defer cancel()
 	request, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
@@ -81,22 +81,25 @@ func BuscarCotacao() (*Cotacao, error) {
 	if err != nil {
 		return nil, err
 	}
-	SaveCotacao(ctx, &c)
+	if c.Bid != "" {
+		SaveCotacao(ctx, &c)
+	}
 	return &c, nil
 }
 
 func SaveCotacao(ctx context.Context, c *Cotacao) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*10)
 	defer cancel()
 
-	db, err := gorm.Open(sqlite.Open("../usdbrl.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("usdbrl.db"), &gorm.Config{})
 	if err != nil {
 		return err
 	}
 	db.AutoMigrate(&Cotacao{})
 	select {
-	case <-time.After(10 * time.Second):
-		db.WithContext(ctx).Create(&c)
+	case <-time.After(time.Millisecond * 10):
+		db.Create(&c).WithContext(ctx)
+		return nil
 	case <-ctx.Done():
 		err := ctx.Err()
 		fmt.Println(err)
